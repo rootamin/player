@@ -1,0 +1,33 @@
+name: Build macOS App
+on: [workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: macos-latest # This uses GitHub's Apple Silicon (M1) servers
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          
+      - name: Install dependencies
+        run: flutter pub get
+        
+      - name: Build macOS app
+        run: flutter build macos
+        
+      - name: Zip the App Bundle
+        # macOS .app files are actually folders. We must zip it manually first, 
+        # otherwise GitHub Artifacts will break the internal Mac file permissions.
+        run: |
+          cd build/macos/Build/Products/Release
+          zip -ry koel-player-mac.zip *.app
+          
+      - name: Upload Mac Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: koel-player-macos
+          path: build/macos/Build/Products/Release/koel-player-mac.zip
